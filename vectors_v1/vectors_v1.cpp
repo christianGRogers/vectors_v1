@@ -7,7 +7,6 @@
 #include<iostream>
 #include<vector>
 using namespace std;
-//line 124 ish
 // Global variables(
 #define xSIZE 900
 #define ySIZE 900
@@ -26,9 +25,29 @@ HINSTANCE hInst;
 
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+//
+struct pixel{
+    int x;
+    int y;
+    int R;
+    int G;
+    int B;
+};
+struct point {
+    int x;
+    int y;
+    int z;
+};
+struct posVector {
+    int xStart = 0;
+    int yStart = 0;
+    int zStart =0;
+    int m1;
+    int m2;
+    int m3;  
+};
 
-
-class Grid {
+class NormalizedSpace {
     private:
         vector<int> draw(int x, int y) {
             vector <int> out;
@@ -310,7 +329,7 @@ class ScreenText {
 
 class PixelMemory{
     private:
-        Grid grid;
+        NormalizedSpace grid;
         vector<vector<int>> pixelCache;
         vector<vector<int>> temp; //helper for insert
 
