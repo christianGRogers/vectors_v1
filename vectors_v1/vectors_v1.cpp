@@ -29,9 +29,18 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 struct pixel{
     int x;
     int y;
-    int R;
-    int G;
-    int B;
+    int RGB[3] = {0,0,0};
+    void setWhite() {
+        RGB[0] = 255;
+        RGB[1] = 255;
+        RGB[2] = 255;
+    }
+    void setBlack() {
+        RGB[0] = 0;
+        RGB[1] = 0;
+        RGB[2] = 0;
+    }
+
 };
 struct point {
     int x;
@@ -49,65 +58,54 @@ struct posVector {
 
 class NormalizedSpace {
     private:
-        vector<int> draw(int x, int y) {
-            vector <int> out;
-            out.push_back(origin[0] + x);
-            out.push_back(origin[1] - y);
+        pixel draw(int x, int y) { // normalize to the origin at the center of the screen
+            pixel out;
+            out.x = origin[0] + x;
+            out.y = origin[1] - y;
             return out;
         }
-        vector<vector<int>> drawAxisX() {
-            vector<vector<int>> out;
-            vector<int> tempXY;
-            vector<int> tempDraw;
+        vector<pixel> drawAxisX() {
+            vector<pixel> out;
+            pixel pixelOut;
+            pixel tempDraw;
             for (int i = 0; i <= xSIZE; i++) {
-                tempXY.push_back(i);
-                tempXY.push_back(ySIZE / 2);
-                //RGB
+                pixelOut.x = i;
+                pixelOut.y  = ySIZE / 2;
                 tempDraw = draw(i, 0);
-                if (tempDraw[0] % scale < 5) {
-                    tempXY.push_back(255);
-                    tempXY.push_back(0);
-                    tempXY.push_back(0);
-                }
-                else {
-                    tempXY.push_back(255);
-                    tempXY.push_back(255);
-                    tempXY.push_back(255);
+                pixelOut.setWhite();
+                //add ticks
+                if (tempDraw.x % scale < 5) {
+                    pixelOut.setBlack();
+                    pixelOut.RGB[0] = 255;
                 }
                 //
-                out.push_back(tempXY);
-                tempXY.clear();
+                out.push_back(pixelOut);
             }
             return out;
         }
-        vector<vector<int>> drawAxisY() {
-            vector<vector<int>> out;
-            vector<int> tempXY;
-            vector<int> tempDraw;
+        vector<pixel> drawAxisY() {
+            vector<pixel> out;
+            pixel pixelOut;
+            pixel tempDraw;
             for (int i = 0; i <= ySIZE; i++) {
-                tempXY.push_back(xSIZE / 2);
-                tempXY.push_back(i);
-                //RGB
+                pixelOut.x = xSIZE / 2;
+                pixelOut.y  = i;
                 tempDraw = draw(i, 0);
-                if (tempDraw[0] % scale <5) {
-                    tempXY.push_back(255);
-                    tempXY.push_back(0);
-                    tempXY.push_back(0);
-                }
-                else {
-                    tempXY.push_back(255);
-                    tempXY.push_back(255);
-                    tempXY.push_back(255);
+                pixelOut.setWhite();
+                //add ticks
+                if (tempDraw.x % scale <5) {
+                    pixelOut.setBlack();
+                    pixelOut.RGB[0] = 255;
                 }
                 //
-                out.push_back(tempXY);
-                tempXY.clear();
+                out.push_back(pixelOut);
+                //pixelOut.reset();
             }
             return out;
         }
 
-        vector<int> returnPixelCordinate(double loopIterator, vector<int> vectIN, bool isZeroSlopeY, int axisPoint, bool isZeroSlopeX) {
-            vector<int> out;
+        pixel returnPixelCordinate(double loopIterator, vector<int> vectIN, bool isZeroSlopeY, int axisPoint, bool isZeroSlopeX) {
+            pixel out;
             if (isZeroSlopeY) {
                 cout << "x=" << (int)loopIterator << "\n";
                 cout << "y=" << (int)axisPoint << "\n";
@@ -123,16 +121,12 @@ class NormalizedSpace {
                 cout << "y=" << (int)(ceil((((loopIterator)-vectIN[0]) * (vectIN[3] / vectIN[2])) + vectIN[1])) << "\n";
                 out = draw((int)(loopIterator), (int)(ceil((((loopIterator)-vectIN[0]) * (vectIN[3] / vectIN[2])) + vectIN[1])));
             }
-            //RGB
-            out.push_back(255);
-            out.push_back(0);
-            out.push_back(0);
-            //
+            out.RGB[0] = 255;
             return out;
         }
-        vector<vector<int>> zeroSlope(vector<int> vectIN) { // start, stop, m1, m2
+        vector<pixel> zeroSlope(vector<int> vectIN) { // start, stop, m1, m2
             vector<int> temp;
-            vector<vector<int>> out;
+            vector<pixel> out;
             if (vectIN[2] == 0) {//is line in y plane
                 if (vectIN[3] > 0) {// (pos)
                     for (double yValue = vectIN[1]; yValue < ((vectIN[3] * scale) + vectIN[1]); yValue += ((float)1 / lineSmoothing)) {
@@ -161,8 +155,8 @@ class NormalizedSpace {
             return out;
         }
     public:
-        vector<vector<int>> plotVector(vector<int> vectIN) {//pass four perameters(xStart, yStart, m1,m2) calls returnPixelCordinate in loop and returns pixel cord assosiated
-            vector<vector<int>> out;
+        vector<pixel> plotVector(vector<int> vectIN) {//pass four perameters(xStart, yStart, m1,m2) calls returnPixelCordinate in loop and returns pixel cord assosiated
+            vector<pixel> out;
             vector<int> temp;
             vectIN[0] *= scale;
             vectIN[1] *= scale;
@@ -189,9 +183,9 @@ class NormalizedSpace {
             cout << "done\n";
             return out;
         }
-        vector<vector<int>> drawAxis() {
-            vector<vector<int>> out = drawAxisX();
-            vector<vector<int>> temp = drawAxisY();
+        vector<pixel> drawAxis() {
+            vector<pixel> out = drawAxisX();
+            vector<pixel> temp = drawAxisY();
             out.insert(out.end(), temp.begin(), temp.end());
             return out;
         }
@@ -321,8 +315,8 @@ class ScreenText {
         ScreenText() {
             textOut = "(0,0)";
         }
-        string update(vector<int> pixelCacheEnd) {
-            textOut = "last position drawn(" + to_string((int)ceil((pixelCacheEnd[0] - origin[0]) / scale)) + "," + to_string((int)ceil((origin[1] - pixelCacheEnd[1]) / scale)) + ")";
+        string update(pixel pixelCacheEnd) {
+            textOut = "last position drawn(" + to_string((int)ceil((pixelCacheEnd.x - origin[0]) / scale)) + "," + to_string((int)ceil((origin[1] - pixelCacheEnd.x) / scale)) + ")";
             return textOut;
         }
 };
@@ -330,8 +324,8 @@ class ScreenText {
 class PixelMemory{
     private:
         NormalizedSpace grid;
-        vector<vector<int>> pixelCache;
-        vector<vector<int>> temp; //helper for insert
+        vector<pixel> pixelCache;
+        vector<pixel> temp; //helper for insert
 
     public:
         PixelMemory() {
@@ -342,14 +336,13 @@ class PixelMemory{
             pixelCache = grid.drawAxis();
 
         }
-        vector<vector<int>> getPixelCache(vector<int> xStartyStartM1M2) {
+        vector<pixel> getPixelCache(vector<int> xStartyStartM1M2) {
             if (!xStartyStartM1M2.empty()) { //if there has been input add to cache
                 temp = grid.plotVector(xStartyStartM1M2);
                 pixelCache.insert(pixelCache.end(), temp.begin(), temp.end());
                 temp.clear();
             }
             return pixelCache;
-           
         }
 };
 
@@ -358,14 +351,14 @@ class Interface {
         Command command;
         PixelMemory pixelMem;
         vector<int> vectorPerameters;
-        vector<vector<int>> out;
+        vector<pixel> out;
         //
         ScreenText screenText;
         string tempText;
         LPSTR currentText = NULL;
         int size = 0;
     public:
-        vector<vector<int>> call() {
+        vector<pixel> call() {
             command.start();
             if (command.clear()) {
                 pixelMem.clearPixelMemory();
@@ -476,12 +469,11 @@ int WINAPI WinMain(
     return (int)msg.wParam;
 }
 
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc;
-    vector<vector<int>> pixelCache;
+    vector<pixel> pixelCache;
     Interface user;
     LPSTR screenText;
     switch (message)
@@ -494,7 +486,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             screenText = user.screenTextOut();
             TextOutA(hdc, xSIZE - 200, 2 * user.screenTextLength(), screenText, user.screenTextLength());
             for (int i = 0; i < pixelCache.size(); i++) {
-                SetPixel(hdc, pixelCache[i][0], pixelCache[i][1], RGB(pixelCache[i][2], pixelCache[i][3], pixelCache[i][4]));
+                SetPixel(hdc, pixelCache[i].x, pixelCache[i].y, RGB(pixelCache[i].RGB[0], pixelCache[i].RGB[1], pixelCache[i].RGB[2]));
             }
             pixelCache.clear();
             EndPaint(hWnd, &ps);
