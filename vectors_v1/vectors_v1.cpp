@@ -6,11 +6,43 @@
 #include<cmath>
 #include<iostream>
 #include<vector>
+#include<new>
 using namespace std;
+//custom datatypes
+struct pixel {
+    int x;
+    int y;
+    int RGB[3] = { 0,0,0 };
+    void setWhite() {
+        RGB[0] = 255;
+        RGB[1] = 255;
+        RGB[2] = 255;
+    }
+    void setBlack() {
+        RGB[0] = 0;
+        RGB[1] = 0;
+        RGB[2] = 0;
+    }
+
+};
+struct point {
+    int x = 0;
+    int y = 0;
+    int z = 0;
+};
+struct posVector {
+    int xStart = 0;
+    int yStart = 0;
+    int zStart = 0;
+    int m1 = 0;
+    int m2 = 0;
+    int m3 = 0;
+};
+
 // Global variables(
 #define xSIZE 900
 #define ySIZE 900
-int origin[2] = { xSIZE / 2, ySIZE / 2 };
+int origin[] = {xSIZE / 2, ySIZE / 2};
 bool isStart = true;
 int lineSmoothing = 2;
 int scale = 100; //(scale--> 1unit == scale(pixels)
@@ -26,35 +58,7 @@ HINSTANCE hInst;
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 //
-struct pixel{
-    int x;
-    int y;
-    int RGB[3] = {0,0,0};
-    void setWhite() {
-        RGB[0] = 255;
-        RGB[1] = 255;
-        RGB[2] = 255;
-    }
-    void setBlack() {
-        RGB[0] = 0;
-        RGB[1] = 0;
-        RGB[2] = 0;
-    }
 
-};
-struct point {
-    int x;
-    int y;
-    int z;
-};
-struct posVector {
-    int xStart = 0;
-    int yStart = 0;
-    int zStart =0;
-    int m1;
-    int m2;
-    int m3;  
-};
 
 class NormalizedSpace {
     private:
@@ -316,7 +320,7 @@ class ScreenText {
             textOut = "(0,0)";
         }
         string update(pixel pixelCacheEnd) {
-            textOut = "last position drawn(" + to_string((int)ceil((pixelCacheEnd.x - origin[0]) / scale)) + "," + to_string((int)ceil((origin[1] - pixelCacheEnd.x) / scale)) + ")";
+            textOut = "last position drawn(" + to_string((int)ceil((pixelCacheEnd.x - origin[0]) / scale)) + "," + to_string((int)ceil((origin[1] - pixelCacheEnd.y) / scale)) + ")";
             return textOut;
         }
 };
