@@ -1,4 +1,8 @@
 ///vectors V1(created)May 20 2023 Christian Rogers
+//note that unnesesary axis recalculate needs to be fixed(issue at breakpoint)
+///
+///
+/// /
 #include <windows.h>
 #include <stdlib.h>
 #include <string>
@@ -9,22 +13,6 @@
 #include<new>
 using namespace std;
 //custom datatypes
-struct pixel {
-    int x;
-    int y;
-    int RGB[3] = { 0,0,0 };
-    void setWhite() {
-        RGB[0] = 255;
-        RGB[1] = 255;
-        RGB[2] = 255;
-    }
-    void setBlack() {
-        RGB[0] = 0;
-        RGB[1] = 0;
-        RGB[2] = 0;
-    }
-
-};
 struct point {
     int x = 0;
     int y = 0;
@@ -38,41 +26,109 @@ struct posVector {
     int m2 = 0;
     int m3 = 0;
 };
+struct pixel {
+    int x = 0;
+    int y = 0;
+    int RGB[3] = { 0,0,0 };
+    void setWhite() {
+        RGB[0] = 255;
+        RGB[1] = 255;
+        RGB[2] = 255;
+    }
+    void setBlack() {
+        RGB[0] = 0;
+        RGB[1] = 0;
+        RGB[2] = 0;
+    }
 
-// Global variables(
+};
+struct pixelArray {
+    pixel blank;
+    pixel* array = nullptr;
+    pixel* copy = nullptr;
+    size_t size = 0;
+    void deAllocate() {
+        delete[] array;
+        array = nullptr;
+    }
+    void initalize(size_t size) {
+        if (array != nullptr) {
+            deAllocate();
+        }
+        this->array = new pixel[size];
+        this->size = size;
+    }
+    void setSize(size_t newSize) {
+        this->size = newSize;
+    }
+    int  getSize() {
+        return this->size;
+    }
+    void append(pixel add) {
+        size_t baseSize = this->size;
+        copy = new pixel[baseSize];
+        for (int i = 0; i < baseSize; i++) {
+            copy[i] = array[i];
+        }
+        initalize(baseSize + 1);
+        for (int i = 0; i < baseSize; i++) {
+            array[i] = copy[i];
+        }
+        array[baseSize] = add;
+        delete[] copy;
+        copy = nullptr;
+    }
+};
+class ArrayOpperations {
+public:
+    pixelArray join(pixelArray firstArray, pixelArray toJoin, size_t size1, size_t size2) {
+        pixelArray out;
+        out.initalize(size1 + size2);
+        int i = 0;
+        for (;i < size1; i++) {
+            out.array[i] = firstArray.array[i];
+        }
+        for (int a = 0;i < (size1 + size2);i++) {
+            out.array[i] = toJoin.array[a];
+            a++;
+
+        }
+        return out;
+
+    }
+
+};
+// Global variables
 #define xSIZE 900
 #define ySIZE 900
+ArrayOpperations arrayOpp;
 int origin[] = {xSIZE / 2, ySIZE / 2};
 bool isStart = true;
 int lineSmoothing = 2;
 int scale = 100; //(scale--> 1unit == scale(pixels)
 // The main window class name.
 static TCHAR szWindowClass[] = _T("vectors_V1");
-
 // The string that appears in the application's title bar.
 static TCHAR szTitle[] = _T("vectors_V1");
-
 // Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
-
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 //
-
-
 class NormalizedSpace {
     private:
+        pixelArray out;
         pixel draw(int x, int y) { // normalize to the origin at the center of the screen
             pixel out;
             out.x = origin[0] + x;
             out.y = origin[1] - y;
             return out;
         }
-        vector<pixel> drawAxisX() {
-            vector<pixel> out;
+        pixelArray drawAxisX() {
             pixel pixelOut;
             pixel tempDraw;
-            for (int i = 0; i <= xSIZE; i++) {
+            this->out.initalize(0);
+            for (int i = 0; i < xSIZE; i++) {
                 pixelOut.x = i;
                 pixelOut.y  = ySIZE / 2;
                 tempDraw = draw(i, 0);
@@ -83,15 +139,15 @@ class NormalizedSpace {
                     pixelOut.RGB[0] = 255;
                 }
                 //
-                out.push_back(pixelOut);
+                out.append(pixelOut);
             }
-            return out;
+            return this->out;
         }
-        vector<pixel> drawAxisY() {
-            vector<pixel> out;
+        pixelArray drawAxisY() {
             pixel pixelOut;
             pixel tempDraw;
-            for (int i = 0; i <= ySIZE; i++) {
+            this->out.initalize(0);
+            for (int i = 0; i < ySIZE; i++) {
                 pixelOut.x = xSIZE / 2;
                 pixelOut.y  = i;
                 tempDraw = draw(i, 0);
@@ -102,56 +158,55 @@ class NormalizedSpace {
                     pixelOut.RGB[0] = 255;
                 }
                 //
-                out.push_back(pixelOut);
-                //pixelOut.reset();
+                out.append(pixelOut);
             }
-            return out;
+            return this->out;
         }
-
+        void outPutLog(int x, int y) {
+            cout << "x="<<x<<endl;
+            cout << "y=" << y << endl;
+        }
         pixel returnPixelCordinate(double loopIterator, vector<int> vectIN, bool isZeroSlopeY, int axisPoint, bool isZeroSlopeX) {
             pixel out;
             if (isZeroSlopeY) {
-                cout << "x=" << (int)loopIterator << "\n";
-                cout << "y=" << (int)axisPoint << "\n";
+                outPutLog((int)loopIterator, (int)axisPoint);
                 out = draw(axisPoint, loopIterator);
             }
             else if (isZeroSlopeX) {
-                cout << "x=" << (int)axisPoint << "\n";
-                cout << "y=" << (int)loopIterator << "\n";
+                outPutLog((int)loopIterator, (int)axisPoint);
                 out = draw(loopIterator, axisPoint);
             }
             else {
-                cout << "x=" << (int)(loopIterator) << "\n";
-                cout << "y=" << (int)(ceil((((loopIterator)-vectIN[0]) * (vectIN[3] / vectIN[2])) + vectIN[1])) << "\n";
+                outPutLog((int)loopIterator, (int)(ceil((((loopIterator)-vectIN[0]) * (vectIN[3] / vectIN[2])) + vectIN[1])));
                 out = draw((int)(loopIterator), (int)(ceil((((loopIterator)-vectIN[0]) * (vectIN[3] / vectIN[2])) + vectIN[1])));
             }
             out.RGB[0] = 255;
             return out;
         }
-        vector<pixel> zeroSlope(vector<int> vectIN) { // start, stop, m1, m2
-            vector<int> temp;
-            vector<pixel> out;
+        pixelArray zeroSlope(vector<int> vectIN) { // start, stop, m1, m2
+            vector<int> temp;//blank vector
+            this->out.initalize(0);
             if (vectIN[2] == 0) {//is line in y plane
                 if (vectIN[3] > 0) {// (pos)
                     for (double yValue = vectIN[1]; yValue < ((vectIN[3] * scale) + vectIN[1]); yValue += ((float)1 / lineSmoothing)) {
-                        out.push_back(returnPixelCordinate(yValue, temp, true, vectIN[0], false));
+                        out.append(returnPixelCordinate(yValue, temp, true, vectIN[0], false));
                     }
                 }
                 else {// (neg)
                     for (double yValue = vectIN[1]; yValue > ((vectIN[3] * scale) + vectIN[1]); yValue -= ((float)1 / lineSmoothing)) {
-                        out.push_back(returnPixelCordinate(yValue, temp, true, vectIN[0], false));
+                        out.append(returnPixelCordinate(yValue, temp, true, vectIN[0], false));
                     }
                 }
             }
             else {//is line in x plane
                 if (vectIN[2] > 0) {// (pos)
                     for (double xValue = vectIN[0]; xValue < ((vectIN[2] * scale) + vectIN[0]); xValue += ((float)1 / lineSmoothing)) {
-                        out.push_back(returnPixelCordinate(xValue, temp, false, vectIN[1], true));
+                        out.append(returnPixelCordinate(xValue, temp, false, vectIN[1], true));
                     }
                 }
                 else {// (neg)
                     for (double xValue = vectIN[0]; xValue > ((vectIN[2] * scale) + vectIN[0]); xValue -= ((float)1 / lineSmoothing)) {
-                        out.push_back(returnPixelCordinate(xValue, temp, false, vectIN[1], true));
+                        out.append(returnPixelCordinate(xValue, temp, false, vectIN[1], true));
                     }
                 }
             }
@@ -159,52 +214,60 @@ class NormalizedSpace {
             return out;
         }
     public:
-        vector<pixel> plotVector(vector<int> vectIN) {//pass four perameters(xStart, yStart, m1,m2) calls returnPixelCordinate in loop and returns pixel cord assosiated
-            vector<pixel> out;
+        pixelArray plotVector(vector<int> vectIN) {//pass four perameters(xStart, yStart, m1,m2) calls returnPixelCordinate in loop and returns pixel cord assosiated
             vector<int> temp;
             vectIN[0] *= scale;
             vectIN[1] *= scale;
             int xDIR = 1;
             if (vectIN[2] == 0 || vectIN[3] == 0) {
-                out = zeroSlope(vectIN);
+                this->out.initalize(zeroSlope(vectIN).getSize());
+                this->out = zeroSlope(vectIN);
             }
             else if (vectIN[2] == 0 || vectIN[3] == 0) {
-                return out;
+                this->out.initalize(0);
+                return this->out;
             }
             //negative xdirecton
             else if(vectIN[2]<0){
+                this->out.initalize(0);
                 for (double xValue = vectIN[0]; xValue >= ((vectIN[2] * scale) + (1 / lineSmoothing) + (vectIN[0])); xValue -= ((float)1 / lineSmoothing)) {
-                    out.push_back(returnPixelCordinate(xValue, vectIN, false, NULL, false));
+                    out.append(returnPixelCordinate(xValue, vectIN, false, NULL, false));
                 }
             }
             //positive x direction
             else {
+                this->out.initalize(0);
                 for (double xValue = vectIN[0]; xValue <= ((vectIN[2] * scale) + (1 / lineSmoothing) + (vectIN[0])); xValue += ((float)1 / lineSmoothing)) {
-                    out.push_back(returnPixelCordinate(xValue, vectIN, false, NULL, false));
+                    out.append(returnPixelCordinate(xValue, vectIN, false, NULL, false));
                 }
 
             }
             cout << "done\n";
             return out;
         }
-        vector<pixel> drawAxis() {
-            vector<pixel> out = drawAxisX();
-            vector<pixel> temp = drawAxisY();
-            out.insert(out.end(), temp.begin(), temp.end());
-            return out;
+        pixelArray drawAxis() {
+            pixelArray axisLinesX;
+            axisLinesX.initalize(drawAxisX().getSize());
+            axisLinesX = drawAxisX();
+            pixelArray axisLinesY;
+            axisLinesY.initalize(drawAxisY().getSize());
+            axisLinesY = drawAxisY();
+            this->out.initalize(axisLinesX.getSize()+ axisLinesY.getSize());
+            this->out = arrayOpp.join(axisLinesX, axisLinesY, axisLinesX.getSize(), axisLinesY.getSize());
+
+            return this->out;
         }
-
-
+        int getSize() {
+            return this->out.getSize();
+        }
 };
 //todo
 class Opperations { // called from commands to perform more complex vector opperations 
     private:
-        vector<int> values;
-        int type;
+        
     public:
         Opperations(vector<int> values, int type) {
-            this->values = values;
-            this->type = type;
+
         }
         void drawOutput(vector<vector<int>> linesToBeDrawn) {
 
@@ -287,17 +350,21 @@ class Command {
             }
         }
         bool clear() {
-            return command == "clear";
+            return this->command == "clear";
+        }
+        bool isNULL() {
+            return this->command == "";
         }
         void start() {
             cout << "\n--> ";
             getline(cin, command);
             parseVectorInput(command);
+            if (command == "") {
+                return;
+            }
             help();
             setSmoothing();
             setScale();
-
-
         }
         vector<int> vectorPerameters() {
             vector<int> out;
@@ -317,7 +384,7 @@ class ScreenText {
         string textOut;
     public:
         ScreenText() {
-            textOut = "(0,0)";
+            this->textOut = "(0,0)";
         }
         string update(pixel pixelCacheEnd) {
             textOut = "last position drawn(" + to_string((int)ceil((pixelCacheEnd.x - origin[0]) / scale)) + "," + to_string((int)ceil((origin[1] - pixelCacheEnd.y) / scale)) + ")";
@@ -328,25 +395,29 @@ class ScreenText {
 class PixelMemory{
     private:
         NormalizedSpace grid;
-        vector<pixel> pixelCache;
-        vector<pixel> temp; //helper for insert
+        pixelArray pixelCache;
+        pixelArray newLines;//helper for append
 
     public:
+        void resetPixelCache() {
+            this->pixelCache.initalize(grid.drawAxis().getSize());
+            this->pixelCache = grid.drawAxis();
+        }
         PixelMemory() {
-            pixelCache = grid.drawAxis();
+            resetPixelCache();
         }
-        void clearPixelMemory() {
-            pixelCache.clear();
-            pixelCache = grid.drawAxis();
-
+        int getSize() {
+            return this->pixelCache.getSize();
         }
-        vector<pixel> getPixelCache(vector<int> xStartyStartM1M2) {
+        pixelArray getPixelCache(vector<int> xStartyStartM1M2) {
             if (!xStartyStartM1M2.empty()) { //if there has been input add to cache
-                temp = grid.plotVector(xStartyStartM1M2);
-                pixelCache.insert(pixelCache.end(), temp.begin(), temp.end());
-                temp.clear();
+                newLines.initalize(grid.getSize());
+                newLines = grid.plotVector(xStartyStartM1M2);
+                for (int i = 0; i < newLines.getSize(); i++) {
+                    pixelCache.append(newLines.array[i]);
+                }
             }
-            return pixelCache;
+            return this->pixelCache;
         }
 };
 
@@ -355,30 +426,43 @@ class Interface {
         Command command;
         PixelMemory pixelMem;
         vector<int> vectorPerameters;
-        vector<pixel> out;
+        pixelArray out;
         //
         ScreenText screenText;
         string tempText;
-        LPSTR currentText = NULL;
-        int size = 0;
+        LPSTR currentText;
+        int size;
     public:
-        vector<pixel> call() {
+        Interface() {
+            this->size = 0;
+            this->currentText = NULL;
+            this->out.initalize(pixelMem.getSize());
+            this->out = pixelMem.getPixelCache(vectorPerameters);
+        }
+        int getSize() {
+            return this->out.getSize();
+        }
+        pixelArray call() {
             command.start();
             if (command.clear()) {
-                pixelMem.clearPixelMemory();
+                pixelMem.resetPixelCache();
+            }
+            if (command.isNULL()) { 
+                return this->out;
             }
             vectorPerameters = command.vectorPerameters();
+            out.initalize(pixelMem.getSize());
             out = pixelMem.getPixelCache(vectorPerameters);
-            return out;
+            return this->out;
         }
         LPSTR screenTextOut() {
-            tempText = screenText.update(out[out.size() - 1]);
+            tempText = screenText.update(out.array[out.getSize() - 1]);
             currentText = const_cast<char*>(tempText.c_str());
             return const_cast<char*>(tempText.c_str());
         }
         int screenTextLength() {
-            size = (int)tempText.length();
-            return size;
+            this ->size = (int)tempText.length();
+            return this->size;
         }
 
 };
@@ -415,21 +499,7 @@ int WINAPI WinMain(
 
         return 1;
     }
-
-    // Store instance handle in our global variable
     hInst = hInstance;
-
-    // The parameters to CreateWindowEx explained:
-    // WS_EX_OVERLAPPEDWINDOW : An optional extended window style.
-    // szWindowClass: the name of the application
-    // szTitle: the text that appears in the title bar
-    // WS_OVERLAPPEDWINDOW: the type of window to create
-    // CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-    // 500, 100: initial size (width, length)
-    // NULL: the parent of this window
-    // NULL: this application does not have a menu bar
-    // hInstance: the first parameter from WinMain
-    // NULL: not used in this application
     HWND hWnd = CreateWindowEx(
         WS_EX_OVERLAPPEDWINDOW,
         szWindowClass,
@@ -442,7 +512,7 @@ int WINAPI WinMain(
         hInstance,
         NULL
     );
-    HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+    HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));// setbackground colour
     SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG_PTR)brush);
 
     if (!hWnd)
@@ -477,22 +547,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc;
-    vector<pixel> pixelCache;
+    pixelArray pixelCache;
     Interface user;
     LPSTR screenText;
     switch (message)
     {
     case WM_PAINT:
         while (true) {
-           // LPSTR screenText;
+            pixelCache.initalize(user.getSize());
             pixelCache = user.call();
             hdc = BeginPaint(hWnd, &ps);
             screenText = user.screenTextOut();
-            TextOutA(hdc, xSIZE - 200, 2 * user.screenTextLength(), screenText, user.screenTextLength());
-            for (int i = 0; i < pixelCache.size(); i++) {
-                SetPixel(hdc, pixelCache[i].x, pixelCache[i].y, RGB(pixelCache[i].RGB[0], pixelCache[i].RGB[1], pixelCache[i].RGB[2]));
+            TextOutA(hdc, xSIZE - 200, 2 * user.screenTextLength(), user.screenTextOut(), user.screenTextLength());
+            for (int i = 0; i < pixelCache.getSize(); i++) {
+                SetPixel(hdc, pixelCache.array[i].x, pixelCache.array[i].y, RGB(pixelCache.array[i].RGB[0], pixelCache.array[i].RGB[1], pixelCache.array[i].RGB[2]));
+                    
             }
-            pixelCache.clear();
+            
             EndPaint(hWnd, &ps);
             InvalidateRect(hWnd, 0, 1);
         }
