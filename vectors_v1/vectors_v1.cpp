@@ -1,8 +1,4 @@
 ///vectors V1(created)May 20 2023 Christian Rogers
-//note that unnesesary axis recalculate needs to be fixed(issue at breakpoint)
-///
-///
-/// /
 #include <windows.h>
 #include <stdlib.h>
 #include <string>
@@ -11,6 +7,7 @@
 #include<iostream>
 #include<vector>
 #include<new>
+#include <cstdlib>
 using namespace std;
 //custom datatypes
 struct point {
@@ -43,20 +40,22 @@ struct pixel {
 
 };
 struct pixelArray {
-    pixel blank;
     pixel* array = nullptr;
     pixel* copy = nullptr;
     size_t size = 0;
+    bool isFree = true;
     void deAllocate() {
-        delete[] array;
-        array = nullptr;
+        if (!isFree) {
+            free(array);
+            isFree = true;
+        }
     }
     void initalize(size_t size) {
-        if (array != nullptr) {
-            deAllocate();
-        }
-        this->array = new pixel[size];
+        //deAllocate(); uncommenting this line will solve the mem leak iddle 1.5GB --> 10MB howwever at some point sets memory outside bounds causeing undefined behavior
+        // each compile is kind of broken(some work others have partialy courupted arrays that have been overwriten)
+        this->array = (pixel*)malloc(size * sizeof(*array));
         this->size = size;
+        this->isFree = false;
     }
     void setSize(size_t newSize) {
         this->size = newSize;
@@ -65,8 +64,8 @@ struct pixelArray {
         return this->size;
     }
     void append(pixel add) {
-        size_t baseSize = this->size;
-        copy = new pixel[baseSize];
+        int baseSize = this->size;
+        copy = (pixel*)malloc(size * sizeof(*copy));
         for (int i = 0; i < baseSize; i++) {
             copy[i] = array[i];
         }
@@ -75,8 +74,7 @@ struct pixelArray {
             array[i] = copy[i];
         }
         array[baseSize] = add;
-        delete[] copy;
-        copy = nullptr;
+        free(copy);
     }
 };
 class ArrayOpperations {
@@ -93,6 +91,10 @@ public:
             a++;
 
         }
+        ///continue with undefined behaviour due to mem  alloc going out of range
+        //
+        ///
+        ///
         return out;
 
     }
@@ -247,19 +249,19 @@ class NormalizedSpace {
         }
         pixelArray drawAxis() {
             pixelArray axisLinesX;
+            
             axisLinesX.initalize(drawAxisX().getSize());
             axisLinesX = drawAxisX();
             pixelArray axisLinesY;
             axisLinesY.initalize(drawAxisY().getSize());
             axisLinesY = drawAxisY();
+
             this->out.initalize(axisLinesX.getSize()+ axisLinesY.getSize());
             this->out = arrayOpp.join(axisLinesX, axisLinesY, axisLinesX.getSize(), axisLinesY.getSize());
 
             return this->out;
         }
-        int getSize() {
-            return this->out.getSize();
-        }
+
 };
 //todo
 class Opperations { // called from commands to perform more complex vector opperations 
@@ -411,7 +413,7 @@ class PixelMemory{
         }
         pixelArray getPixelCache(vector<int> xStartyStartM1M2) {
             if (!xStartyStartM1M2.empty()) { //if there has been input add to cache
-                newLines.initalize(grid.getSize());
+                newLines.initalize(grid.plotVector(xStartyStartM1M2).getSize());
                 newLines = grid.plotVector(xStartyStartM1M2);
                 for (int i = 0; i < newLines.getSize(); i++) {
                     pixelCache.append(newLines.array[i]);
