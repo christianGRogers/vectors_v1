@@ -263,18 +263,6 @@ class NormalizedSpace {
         }
 
 };
-//todo
-class Opperations { // called from commands to perform more complex vector opperations 
-    private:
-        
-    public:
-        Opperations(vector<int> values, int type) {
-
-        }
-        void drawOutput(vector<vector<int>> linesToBeDrawn) {
-
-        }
-};
 class Command {
     private:
         string command;
