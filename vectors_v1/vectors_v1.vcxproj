@@ -133,7 +133,7 @@
     <ClInclude Include="vectors_v1.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="vectors_v1.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="vectors_v1.rc" />
