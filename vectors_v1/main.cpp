@@ -23,20 +23,25 @@ struct pixel {
     }
 
 };
-struct XYZ {
+struct XY {
     int x = 0;
     int y = 0;
-    int z = 0;
 };
 struct groundedVector {
     int xStart = 0;
     int yStart = 0;
-    int zStart = 0;
     int m1 = 0;
     int m2 = 0;
-    int m3 = 0;
     bool empty(){
-        return xStart == 0 && yStart == 0 && zStart == 0 && m1 == 0 && m2 == 0 && m3 == 0;
+        return xStart == 0 && yStart == 0&& m1 == 0 && m2 == 0;
+    }
+};
+struct opperation {
+    int x = 0;
+    int y = 0;
+    int opp = 0;
+    bool empty() {
+        return x == 0 && y == 0 && opp == 0;
     }
 };
 
@@ -63,14 +68,119 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 class ParseVector {
 private:
-    XYZ parsePoint() {
+    XY parsePoint(string in) {
+        XY out;
+        string temp;
+        for (int i = 0; i < in.length(); i++) {
+            if ((int)in[i] == 44) {
+                out.x = stoi(temp);
+                temp = "";
+                continue;
+            }
+            else if ((int)in[i] < 48 || (int)in[i]>57) {
+                if ((int)in[i] != 43 && (int)in[i] != 45) {
+                    continue;
+                }
+            }
+            temp += in[i];
+        }
+        out.y = stoi(temp);
+        return out;
 
-    }
-    XYZ parseVector() {
     }
 public:
 
-    groundedVector parseVetor(){
+    groundedVector parseVetorGrounded(string in){//parse a input in the form (x,y)[m1,m2]
+        bool b1 = false;
+        bool b2 = false;
+        string point;
+        string direction;
+        for (int i = 0; i < in.length(); i++) {
+            switch ((int)in[i]) {
+            case 40:
+                b1 = true;
+                continue;
+            case 41:
+                b1 = false;
+                continue;
+            case 91:
+                b2 = true;
+                continue;
+            case 93:
+                b2 = false;
+                continue;
+            default:
+                break;
+            }
+            if (b1) {
+                point += in[i];
+            }
+            else if (b2) {
+                direction += in[i];
+            }
+        }
+        XY pointINT = parsePoint(point);
+        XY directionINT = parsePoint(direction);
+        groundedVector out;
+        out.xStart = pointINT.x;
+        out.yStart = pointINT.y;
+        out.m1 = directionINT.x;
+        out.m2 = directionINT.y;
+        return out;
+    }
+    groundedVector directional(string command) {
+        string temp;
+        groundedVector out;
+        XY mValues;
+        if (91 == (int)command[0]) {
+            for (int i = 1; i < command.length() - 1; i++) {
+                temp += command[i];
+            }
+            mValues = parsePoint(temp);
+        }
+        out.xStart = 0;
+        out.yStart = 0;
+        out.m1 = mValues.x;
+        out.m2 = mValues.y;
+        return out;
+    }
+    vector<opperation> opperartionParse(string command) { //[x,y] + [x,y] + [x,y] - [x,y] + [x,y] etc returuns a vect of elemets x,y,opp if opp == 0; start/end assci ->int
+        vector<opperation> out;
+        vector<int> opperationType;
+        bool isOPP = false;
+        string BAR;
+        XY FOO;
+        opperation intermidiate;
+        for (int i = 0; i < command.length(); i++) {
+            if ((int)command[i] == 43 || (int)command[i] == 45){
+                opperationType.push_back((int)command[i]);
+                isOPP = true;
+            }
+        }
+        if (!isOPP) {
+            return out;
+        }
+        for (int i = 0; i < command.length(); i++) {
+            if((int)command[i] == 91){
+                isOPP = true;
+                continue;
+            }
+            if ((int)command[i] == 93) {
+                isOPP = false;
+                FOO = parsePoint(BAR);
+                intermidiate.x = FOO.x;
+                intermidiate.y = FOO.y;
+                out.push_back(intermidiate);
+                continue;
+            }
+            else if (isOPP) {
+                BAR += command[i];
+            }
+        }
+        for (int i = 1; i < out.size(); i++) {
+            out[i].opp = opperationType[i];
+        }
+        return out;
 
     }
 };
@@ -211,44 +321,38 @@ public:
 class Opperations {
 private:
 public:
-    groundedVector addition(string command) {
-        //[x,y,z]+[]
-        for (int i : command) {
-
+    vector<groundedVector> returnGroundedVcetors(vector<opperation> in) { // take a vect of opperations and return their corosponding result with vectors use to get there
+        vector<groundedVector> out;
+        XY endPoint;
+        groundedVector FOO;
+        //
+        //continue with math implementation
+        //
+        for (int i = 0; i < in.size()-1;i++) {
+            FOO.xStart = endPoint.x;
+            FOO.yStart = endPoint.y;
+            FOO.m1 = in[i].x;
+            FOO.m1 = in[i].y;
+            out.push_back(FOO);
+            if ((int)in[i].opp == 43) {//addition
+                endPoint.x += in[i].x;
+                endPoint.y += in[i].y;
+            }
+            else if ((int)in[i].opp == 45) {
+                endPoint.x -= in[i].x;
+                endPoint.y -= in[i].y;
+            }
         }
+        return out;
     }
 };
+
 class Command {
 private:
     string command;
+    ParseVector parse;
 
-    //parsing varibles for (xS,xY)[m1,m2]
-    string vectComponet1 = "";
-    string vectComponet2 = "";
-    string xStart = "";
-    string yStart = "";
-    void parseVectorInput(string commandIN) {//basic vector in
-        //format (xStart,yStart)[m1,m2] parsing string input
-        int comma = 0;
-        bool isStartPoint = true;
-        if (commandIN[0] != '(') { return; }
-        for (int i = 1; i < commandIN.length() - 1; i++) {
-            switch (commandIN[i]) {
-            case ' ':  continue;
-            case '[': continue;
-            case ',': comma++; continue;
-            case ')': comma++;continue;
-            }
-            switch (comma) {
-            case 0: xStart += commandIN[i];break;
-            case 1: yStart += command[i];break;
-            case 2: vectComponet1 += commandIN[i]; break;
-            case 3: vectComponet2 += commandIN[i];
-            }
-        }
-        return;
 
-    }
     void help() {
         if (command == "help") {
             cout << "R^2 vector: (xStart,yStart)[x,y]\n";
@@ -258,12 +362,6 @@ private:
             cout << "==================\n";
             cout << "note that invalid input will not throw error";
         }
-    }
-    void reset() {
-        vectComponet1 = "";
-        vectComponet2 = "";
-        yStart = "";
-        xStart = "";
     }
     void setSmoothing() {
         if (command == "smoothing") {
@@ -300,22 +398,18 @@ public:
     void start() {
         cout << "\n--> ";
         getline(cin, command);
-        parseVectorInput(command);
         help();
         setSmoothing();
         setScale();
-
-
     }
-    groundedVector vectorPerameters() {
-        groundedVector outPerameters;
-        if (vectComponet1 == "" || vectComponet2 == "" || yStart == "" || xStart == "") { return outPerameters; }
-        outPerameters.xStart = stoi(this->xStart);
-        outPerameters.yStart = stoi(this->yStart);
-        outPerameters.m1 = stoi(this->vectComponet1);
-        outPerameters.m2 = stoi(this->vectComponet2);
-        reset();
-        return outPerameters;
+    groundedVector vectorPerametersPointBased() {
+        return parse.parseVetorGrounded(command);
+    }
+    groundedVector directionVector() {
+        return parse.directional(command);
+    }
+    vector<opperation> opperations() {
+        return parse.opperartionParse(command);
     }
 
 };
@@ -325,7 +419,7 @@ private:
     string textOut;
 public:
     ScreenText() {
-        textOut = "(0,0)";
+        this->textOut = "(0,0)";
     }
     string update(pixel pixelCacheEnd) {
         textOut = "last position drawn(" + to_string((int)ceil((pixelCacheEnd.x - origin[0]) / scale)) + "," + to_string((int)ceil((origin[1] - pixelCacheEnd.y) / scale)) + ")";
@@ -362,8 +456,9 @@ class Interface {
 private:
     Command command;
     PixelMemory pixelMem;
-    groundedVector vectorPerameters;
+    groundedVector vectorPerametersPointBased;
     vector<pixel> out;
+    Opperations opp;
     //
     ScreenText screenText;
     string tempText;
@@ -372,11 +467,33 @@ private:
 public:
     vector<pixel> call() {
         command.start();
+        out.clear();
         if (command.clear()) {
             pixelMem.clearPixelMemory();
         }
-        vectorPerameters = command.vectorPerameters();
-        out = pixelMem.getPixelCache(vectorPerameters);
+        //gather possible draw command parsed
+        vectorPerametersPointBased = command.directionVector();
+        //cout << vectorPerametersPointBased.xStart << endl;
+        //cout << vectorPerametersPointBased.yStart << endl;
+        //cout << vectorPerametersPointBased.m1 << endl;
+        //cout << vectorPerametersPointBased.m2 << endl;
+        //cin >> tempText;
+        if (command.opperations().size() != 0) {
+            vector<groundedVector> vectorPerametersPointBased;
+            vectorPerametersPointBased = opp.returnGroundedVcetors(command.opperations());
+            for (int i = 0; i < vectorPerametersPointBased.size(); i++) {
+                out.insert(out.end(), pixelMem.getPixelCache(vectorPerametersPointBased[i]).begin(), pixelMem.getPixelCache(vectorPerametersPointBased[i]).end());
+            }
+            if (!(out.size() == 0)) {
+                return out;
+            }
+            
+        }
+        if (vectorPerametersPointBased.empty()) {
+            vectorPerametersPointBased = command.vectorPerametersPointBased();
+        }
+        //base (draw one vector)
+        out = pixelMem.getPixelCache(vectorPerametersPointBased);
         return out;
     }
     LPSTR screenTextOut() {
