@@ -80,8 +80,11 @@ class Helper {
 public:
     bool isValidStoi(string in) {
         for (int i = 0; i < in.length();i++) {
-            if (48 > (int)in[i] || (int)in[i] > 57) {
-                return false;
+            if (45 == (int)in[i]) {
+                continue;
+            }
+            else if (48 > (int)in[i] || (int)in[i] > 57) {
+                 return false;
             }
         }
         return true;
@@ -137,7 +140,7 @@ private:
 
     }
 public:
-    groundedVector parseVetorGrounded(string in){//parse a input in the form (x,y)[m1,m2]
+    groundedVector parseVetorGrounded(string in) {//parse a input in the form (x,y)[m1,m2]
         groundedVector out;
         if ((int)in[0] != 40) {
             return out;
@@ -187,8 +190,12 @@ public:
         string temp;
         groundedVector out;
         XY mValues;
+        int defualt = 2;
+        if (93 == (int)command[command.length()-1]){
+            defualt = 1;
+        }
         if (91 == (int)command[0]) {
-            for (int i = 1; i < command.length() - 2; i++) {
+            for (int i = 1; i < command.length() - defualt; i++) {
                 temp += command[i];
             }
             mValues = parsePoint(temp);
@@ -211,13 +218,22 @@ public:
         }
         vector<int> opperationType;
         bool isOPP = false;
+        bool open = false;
         string BAR;
         XY FOO;
         opperation intermidiate;
         for (int i = 0; i < command.length(); i++) {
+            if ((int)command[i] == 91) {
+                open = true;
+            }
+            else if ((int)command[i] == 93) {
+                open = false;
+            }
             if ((int)command[i] == 43 || (int)command[i] == 45){
-                opperationType.push_back((int)command[i]);
-                isOPP = true;
+                if (!open) {
+                    opperationType.push_back((int)command[i]);
+                    isOPP = true;
+                }
             }
         }
         if (!isOPP) {
