@@ -28,6 +28,7 @@ struct XY {
     int y = 0;
 };
 struct groundedVector {
+    int RGB[3] = { 0,0,0 };
     int xStart = 0;
     int yStart = 0;
     int m1 = 0;
@@ -35,16 +36,58 @@ struct groundedVector {
     bool empty(){
         return xStart == 0 && yStart == 0&& m1 == 0 && m2 == 0;
     }
+    void setRed() {
+        RGB[0] = 255;
+        RGB[1] = 0;
+        RGB[2] = 0;
+    }
+    void setGreen() {
+        RGB[0] = 0;
+        RGB[1] = 255;
+        RGB[2] = 0;
+    }
+    void setBlue() {
+        RGB[0] = 0;
+        RGB[1] = 0;
+        RGB[2] = 255;
+    }
 };
 struct opperation {
+    int RGB[3] = { 0,0,0 };
     int x = 0;
     int y = 0;
     int opp = 0;
     bool empty() {
         return x == 0 && y == 0 && opp == 0;
     }
+    void setRed() {
+        RGB[0] = 255;
+        RGB[1] = 0;
+        RGB[2] = 0;
+    }
+    void setGreen() {
+        RGB[0] = 0;
+        RGB[1] = 255;
+        RGB[2] = 0;
+    }
+    void setBlue() {
+        RGB[0] = 0;
+        RGB[1] = 0;
+        RGB[2] = 255;
+    }
 };
+class Helper {
+public:
+    bool isValidStoi(string in) {
+        for (int i = 0; i < in.length();i++) {
+            if (48 > (int)in[i] || (int)in[i] > 57) {
+                return false;
+            }
+        }
+        return true;
+    }
 
+};
 
 // Global variables(
 #define xSIZE 900
@@ -53,6 +96,7 @@ int origin[] = { xSIZE / 2, ySIZE / 2 };
 bool isStart = true;
 int lineSmoothing = 2;
 int scale = 100; //(scale--> 1unit == scale(pixels)
+Helper helper;
 // The main window class name.
 static TCHAR szWindowClass[] = _T("vectors_V1");
 
@@ -73,7 +117,9 @@ private:
         string temp;
         for (int i = 0; i < in.length(); i++) {
             if ((int)in[i] == 44) {
-                out.x = stoi(temp);
+                if (helper.isValidStoi(temp)) {
+                    out.x = stoi(temp);
+                }
                 temp = "";
                 continue;
             }
@@ -84,13 +130,18 @@ private:
             }
             temp += in[i];
         }
-        out.y = stoi(temp);
+        if (helper.isValidStoi(temp)) {
+            out.y = stoi(temp);
+        }
         return out;
 
     }
 public:
-
     groundedVector parseVetorGrounded(string in){//parse a input in the form (x,y)[m1,m2]
+        groundedVector out;
+        if ((int)in[0] != 40) {
+            return out;
+        }
         bool b1 = false;
         bool b2 = false;
         string point;
@@ -121,7 +172,11 @@ public:
         }
         XY pointINT = parsePoint(point);
         XY directionINT = parsePoint(direction);
-        groundedVector out;
+        switch ((int)in[in.length() - 1]) {
+        case 82: out.setRed(); break;
+        case 71: out.setGreen(); break;
+        case 66: out.setBlue(); break;
+        }
         out.xStart = pointINT.x;
         out.yStart = pointINT.y;
         out.m1 = directionINT.x;
@@ -133,10 +188,15 @@ public:
         groundedVector out;
         XY mValues;
         if (91 == (int)command[0]) {
-            for (int i = 1; i < command.length() - 1; i++) {
+            for (int i = 1; i < command.length() - 2; i++) {
                 temp += command[i];
             }
             mValues = parsePoint(temp);
+        }
+        switch ((int)command[command.length() -1]) {
+        case 82: out.setRed(); break;
+        case 71: out.setGreen();break;
+        case 66: out.setBlue();break;
         }
         out.xStart = 0;
         out.yStart = 0;
@@ -146,6 +206,9 @@ public:
     }
     vector<opperation> opperartionParse(string command) { //[x,y] + [x,y] + [x,y] - [x,y] + [x,y] etc returuns a vect of elemets x,y,opp if opp == 0; start/end assci ->int
         vector<opperation> out;
+        if ((int)command[0] != 91) {
+            return out;
+        }
         vector<int> opperationType;
         bool isOPP = false;
         string BAR;
@@ -161,7 +224,19 @@ public:
             return out;
         }
         for (int i = 0; i < command.length(); i++) {
+            if (!isOPP) {
+                if ((int)command[i] == 82 || (int)command[i] == 71 || (int)command[i] == 66) {
+                    switch ((int)command[i]) {
+                    case 82: intermidiate.setRed(); break;
+                    case 71: intermidiate.setGreen(); break;
+                    case 66: intermidiate.setBlue(); break;
+                    }
+                    out.push_back(intermidiate);
+                    continue;
+                }
+            }
             if((int)command[i] == 91){
+                BAR = "";
                 isOPP = true;
                 continue;
             }
@@ -170,7 +245,6 @@ public:
                 FOO = parsePoint(BAR);
                 intermidiate.x = FOO.x;
                 intermidiate.y = FOO.y;
-                out.push_back(intermidiate);
                 continue;
             }
             else if (isOPP) {
@@ -178,7 +252,7 @@ public:
             }
         }
         for (int i = 1; i < out.size(); i++) {
-            out[i].opp = opperationType[i];
+            out[i].opp = opperationType[i-1];
         }
         return out;
 
@@ -248,33 +322,34 @@ private:
             consoleLogCord((int)(loopIterator), (int)(ceil((((loopIterator)-vectIN.xStart) * (vectIN.m2 / vectIN.m1)) + vectIN.yStart)));
             out = draw((int)(loopIterator), (double)(ceil((((loopIterator)-(double)vectIN.xStart) * ((float)vectIN.m2 / (float)vectIN.m1)) + (float)vectIN.yStart)));
         }
-        out.RGB[0] = 255;
+        out.RGB[0] = vectIN.RGB[0];
+        out.RGB[1] = vectIN.RGB[1];
+        out.RGB[2] = vectIN.RGB[2];
         return out;
     }
     vector<pixel> zeroSlope(groundedVector vectIN) { 
-        groundedVector temp;
         vector<pixel> out;
         if (vectIN.m1 == 0) {//is line in y plane
             if (vectIN.m2 > 0) {// (pos)
                 for (double yValue = vectIN.yStart; yValue < ((vectIN.m2 * scale) + vectIN.yStart); yValue += ((float)1 / lineSmoothing)) {
-                    out.push_back(returnPixelCordinate(yValue, temp, true, vectIN.xStart, false));
+                    out.push_back(returnPixelCordinate(yValue, vectIN, true, vectIN.xStart, false));
                 }
             }
             else {// (neg)
                 for (double yValue = vectIN.yStart; yValue > ((vectIN.m2 * scale) + vectIN.yStart); yValue -= ((float)1 / lineSmoothing)) {
-                    out.push_back(returnPixelCordinate(yValue, temp, true, vectIN.xStart, false));
+                    out.push_back(returnPixelCordinate(yValue, vectIN, true, vectIN.xStart, false));
                 }
             }
         }
         else {//is line in x plane
             if (vectIN.m1 > 0) {// (pos)
                 for (double xValue = vectIN.xStart; xValue < ((vectIN.m1 * scale) + vectIN.xStart); xValue += ((float)1 / lineSmoothing)) {
-                    out.push_back(returnPixelCordinate(xValue, temp, false, vectIN.yStart, true));
+                    out.push_back(returnPixelCordinate(xValue, vectIN, false, vectIN.yStart, true));
                 }
             }
             else {// (neg)
                 for (double xValue = vectIN.xStart; xValue > ((vectIN.m1 * scale) + vectIN.xStart); xValue -= ((float)1 / lineSmoothing)) {
-                    out.push_back(returnPixelCordinate(xValue, temp, false, vectIN.yStart, true));
+                    out.push_back(returnPixelCordinate(xValue, vectIN, false, vectIN.yStart, true));
                 }
             }
         }
@@ -328,21 +403,34 @@ public:
         //
         //continue with math implementation
         //
-        for (int i = 0; i < in.size()-1;i++) {
+        for (int i = 0; i < in.size();i++) {
             FOO.xStart = endPoint.x;
             FOO.yStart = endPoint.y;
             FOO.m1 = in[i].x;
-            FOO.m1 = in[i].y;
-            out.push_back(FOO);
-            if ((int)in[i].opp == 43) {//addition
+            FOO.m2 = in[i].y;
+            //
+            if ((int)in[i].opp == 43 || (int)in[i].opp == 0) {//addition
                 endPoint.x += in[i].x;
                 endPoint.y += in[i].y;
             }
-            else if ((int)in[i].opp == 45) {
+            else if ((int)in[i].opp == 45) { //subtraction
+                FOO.m1 *= -1;
+                FOO.m2 *= -1;
                 endPoint.x -= in[i].x;
                 endPoint.y -= in[i].y;
             }
+            FOO.RGB[0] = in[i].RGB[0];
+            FOO.RGB[1] = in[i].RGB[1];
+            FOO.RGB[2] = in[i].RGB[2];
+
+            out.push_back(FOO);
         }
+        FOO.xStart = 0;
+        FOO.yStart = 0;
+        FOO.m1 = endPoint.x;
+        FOO.m2 = endPoint.y;
+        FOO.setRed();
+        out.push_back(FOO);
         return out;
     }
 };
@@ -355,7 +443,9 @@ private:
 
     void help() {
         if (command == "help") {
-            cout << "R^2 vector: (xStart,yStart)[x,y]\n";
+            cout << "R^2 vector: (xStart,yStart)[m1,m2]# (note that R,G or B in place of # will select colour{defualt to black})\n";
+            cout << "R^2 vector: [m1,m2]#\n";
+            cout << "R^2 vector: [x,y]#+[x,y]#-[x,y]# ...etc(result will be drawn in red)\n";
             cout << "line smoothing: smoothing\n";
             cout << "scaling: scale\n";
             cout << "clear screen: clear\n";
@@ -473,16 +563,13 @@ public:
         }
         //gather possible draw command parsed
         vectorPerametersPointBased = command.directionVector();
-        //cout << vectorPerametersPointBased.xStart << endl;
-        //cout << vectorPerametersPointBased.yStart << endl;
-        //cout << vectorPerametersPointBased.m1 << endl;
-        //cout << vectorPerametersPointBased.m2 << endl;
-        //cin >> tempText;
+
         if (command.opperations().size() != 0) {
             vector<groundedVector> vectorPerametersPointBased;
             vectorPerametersPointBased = opp.returnGroundedVcetors(command.opperations());
             for (int i = 0; i < vectorPerametersPointBased.size(); i++) {
-                out.insert(out.end(), pixelMem.getPixelCache(vectorPerametersPointBased[i]).begin(), pixelMem.getPixelCache(vectorPerametersPointBased[i]).end());
+                vector<pixel> temp = pixelMem.getPixelCache(vectorPerametersPointBased[i]);
+                out.insert(out.end(), temp.begin(), temp.end());
             }
             if (!(out.size() == 0)) {
                 return out;
