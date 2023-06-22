@@ -102,28 +102,24 @@ int scale = 100; //(scale--> 1unit == scale(pixels)
 Helper helper;
 // The main window class name.
 static TCHAR szWindowClass[] = _T("vectors_V1");
-
 // The string that appears in the application's title bar.
 static TCHAR szTitle[] = _T("vectors_V1");
-
 // Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
-
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 //
-
 class ParseVector {
 private:
     XY parsePoint(string in) {
         XY out;
-        string temp;
+        string intermidiate;
         for (int i = 0; i < in.length(); i++) {
             if ((int)in[i] == 44) {
-                if (helper.isValidStoi(temp)) {
-                    out.x = stoi(temp);
+                if (helper.isValidStoi(intermidiate)) {
+                    out.x = stoi(intermidiate);
                 }
-                temp = "";
+                intermidiate = "";
                 continue;
             }
             else if ((int)in[i] < 48 || (int)in[i]>57) {
@@ -131,10 +127,10 @@ private:
                     continue;
                 }
             }
-            temp += in[i];
+            intermidiate += in[i];
         }
-        if (helper.isValidStoi(temp)) {
-            out.y = stoi(temp);
+        if (helper.isValidStoi(intermidiate)) {
+            out.y = stoi(intermidiate);
         }
         return out;
 
@@ -187,7 +183,7 @@ public:
         return out;
     }
     groundedVector directional(string command) {
-        string temp;
+        string intermidiate;
         groundedVector out;
         XY mValues;
         int defualt = 2;
@@ -196,9 +192,9 @@ public:
         }
         if (91 == (int)command[0]) {
             for (int i = 1; i < command.length() - defualt; i++) {
-                temp += command[i];
+                intermidiate += command[i];
             }
-            mValues = parsePoint(temp);
+            mValues = parsePoint(intermidiate);
         }
         switch ((int)command[command.length() -1]) {
         case 82: out.setRed(); break;
@@ -324,6 +320,7 @@ private:
         cout << "x=" << x << endl;
         cout << "y=" << y << endl;
     }
+    //called by all vector draw fuctions to return apropriate cords and log them to screen
     pixel returnPixelCordinate(double loopIterator, groundedVector vectIN, bool isZeroSlopeY, int axisPoint, bool isZeroSlopeX) {
         pixel out;
         if (isZeroSlopeY) {
@@ -343,7 +340,7 @@ private:
         out.RGB[2] = vectIN.RGB[2];
         return out;
     }
-    vector<pixel> zeroSlope(groundedVector vectIN) { 
+    vector<pixel> zeroSlope(groundedVector vectIN) { //for special case vectors with no slope
         vector<pixel> out;
         if (vectIN.m1 == 0) {//is line in y plane
             if (vectIN.m2 > 0) {// (pos)
@@ -373,6 +370,7 @@ private:
         return out;
     }
 public:
+    //called regardless of vect type just given different context
     vector<pixel> plotVector(groundedVector vectIN) {//pass four perameters(xStart, yStart, m1,m2) calls returnPixelCordinate in loop and returns pixel cord assosiated
         vector<pixel> out;
         vectIN.xStart *= scale;
@@ -508,6 +506,7 @@ public:
         setSmoothing();
         setScale();
     }
+    //all three callled by the interface to pass a parsed comand or array of commands to the apropriate draw or calculate
     groundedVector vectorPerametersPointBased() {
         return parse.parseVetorGrounded(command);
     }
@@ -589,8 +588,7 @@ public:
             }
             if (!(out.size() == 0)) {
                 return out;
-            }
-            
+            }    
         }
         if (vectorPerametersPointBased.empty()) {
             vectorPerametersPointBased = command.vectorPerametersPointBased();
