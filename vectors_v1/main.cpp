@@ -1,4 +1,4 @@
-///vectors V1(created)JULY 02 2023 Christian Rogers
+///vectors V1(created)May 02 2023 Christian Rogers
 #include <windows.h>
 #include <stdlib.h>
 #include <string>
