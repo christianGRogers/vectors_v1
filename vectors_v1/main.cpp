@@ -1,4 +1,4 @@
-///vectors V1(created)May 20 2023 Christian Rogers
+///vectors V1(created)JULY 02 2023 Christian Rogers
 #include <windows.h>
 #include <stdlib.h>
 #include <string>
@@ -33,8 +33,8 @@ struct groundedVector {
     int yStart = 0;
     int m1 = 0;
     int m2 = 0;
-    bool empty(){
-        return xStart == 0 && yStart == 0&& m1 == 0 && m2 == 0;
+    bool empty() {
+        return xStart == 0 && yStart == 0 && m1 == 0 && m2 == 0;
     }
     void setRed() {
         RGB[0] = 255;
@@ -84,7 +84,7 @@ public:
                 continue;
             }
             else if (48 > (int)in[i] || (int)in[i] > 57) {
-                 return false;
+                return false;
             }
         }
         return true;
@@ -186,17 +186,16 @@ public:
         string intermidiate;
         groundedVector out;
         XY mValues;
-        int defualt = 2;
-        if (93 == (int)command[command.length()-1]){
-            defualt = 1;
-        }
         if (91 == (int)command[0]) {
-            for (int i = 1; i < command.length() - defualt; i++) {
+            for (int i = 1; i < command.length() - 2; i++) {
                 intermidiate += command[i];
             }
             mValues = parsePoint(intermidiate);
         }
-        switch ((int)command[command.length() -1]) {
+        else {
+            return out;
+        }
+        switch ((int)command[command.length() - 1]) {
         case 82: out.setRed(); break;
         case 71: out.setGreen();break;
         case 66: out.setBlue();break;
@@ -225,7 +224,7 @@ public:
             else if ((int)command[i] == 93) {
                 open = false;
             }
-            if ((int)command[i] == 43 || (int)command[i] == 45){
+            if ((int)command[i] == 43 || (int)command[i] == 45) {
                 if (!open) {
                     opperationType.push_back((int)command[i]);
                     isOPP = true;
@@ -247,7 +246,7 @@ public:
                     continue;
                 }
             }
-            if((int)command[i] == 91){
+            if ((int)command[i] == 91) {
                 BAR = "";
                 isOPP = true;
                 continue;
@@ -264,7 +263,7 @@ public:
             }
         }
         for (int i = 1; i < out.size(); i++) {
-            out[i].opp = opperationType[i-1];
+            out[i].opp = opperationType[i - 1];
         }
         return out;
 
@@ -324,7 +323,7 @@ private:
     pixel returnPixelCordinate(double loopIterator, groundedVector vectIN, bool isZeroSlopeY, int axisPoint, bool isZeroSlopeX) {
         pixel out;
         if (isZeroSlopeY) {
-            consoleLogCord((int)loopIterator,(int)axisPoint);
+            consoleLogCord((int)loopIterator, (int)axisPoint);
             out = draw(axisPoint, loopIterator);
         }
         else if (isZeroSlopeX) {
@@ -492,7 +491,7 @@ public:
         window = FindWindowA("textWindow", NULL);
         ShowWindow(window, 0);
         if (isStart) {
-            cout << "vectors V1 2023 'help' for command's";
+            cout << "vectors V2 2023 'help' for command's";
             isStart = false;
         }
     }
@@ -502,6 +501,9 @@ public:
     void start() {
         cout << "\n--> ";
         getline(cin, command);
+        if (command == "") {
+            return;
+        }
         help();
         setSmoothing();
         setScale();
@@ -588,7 +590,7 @@ public:
             }
             if (!(out.size() == 0)) {
                 return out;
-            }    
+            }
         }
         if (vectorPerametersPointBased.empty()) {
             vectorPerametersPointBased = command.vectorPerametersPointBased();
